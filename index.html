@@ -2,88 +2,91 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>MagicBank · Acceso Seguro</title>
+  <title>MagicBank · Acceso</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     * {
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
     }
 
     body {
       margin: 0;
-      min-height: 100vh;
-      background: radial-gradient(circle at top, #102E6A, #050B1A);
+      font-family: Arial, sans-serif;
+      background: #0a1f44;
+      color: #ffffff;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ffffff;
     }
 
     .login-box {
+      background: #0f2a5a;
+      padding: 30px;
+      border-radius: 12px;
       width: 100%;
-      max-width: 420px;
-      background: rgba(10, 31, 68, 0.95);
-      border-radius: 18px;
-      padding: 36px 28px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      max-width: 360px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    h1 {
       text-align: center;
-    }
-
-    .login-box h1 {
-      color: #C9A14A;
+      color: #c9a14a;
       margin-bottom: 10px;
-      font-size: 26px;
     }
 
-    .login-box p {
+    p {
+      text-align: center;
       font-size: 14px;
-      opacity: 0.85;
-      margin-bottom: 26px;
+      margin-bottom: 25px;
+      color: #d6d6d6;
+    }
+
+    label {
+      font-size: 13px;
+      margin-top: 15px;
+      display: block;
     }
 
     input {
       width: 100%;
-      padding: 14px;
-      margin-bottom: 16px;
-      border-radius: 10px;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 6px;
       border: none;
-      font-size: 15px;
-    }
-
-    input:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px #C9A14A;
+      font-size: 14px;
     }
 
     button {
       width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      background: #C9A14A;
-      color: #0A1F44;
+      margin-top: 20px;
+      padding: 12px;
+      background: #c9a14a;
+      color: #0a1f44;
       font-weight: bold;
-      font-size: 15px;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
-      margin-top: 6px;
+      font-size: 15px;
     }
 
-    button:hover {
-      opacity: 0.92;
+    button:active {
+      opacity: 0.9;
     }
 
-    .status {
-      margin-top: 18px;
-      font-size: 14px;
-      min-height: 18px;
+    .error {
+      margin-top: 15px;
+      color: #ffb3b3;
+      font-size: 13px;
+      text-align: center;
     }
 
     footer {
-      margin-top: 28px;
-      font-size: 12px;
-      opacity: 0.6;
+      margin-top: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: #aaa;
     }
   </style>
 </head>
@@ -92,61 +95,78 @@
 
   <div class="login-box">
     <h1>MagicBank</h1>
-    <p>Acceso seguro a tu curso o facultad</p>
+    <p>Acceso autorizado a tu formación</p>
 
-    <input id="email" type="email" placeholder="Correo electrónico" />
-    <input id="password" type="password" placeholder="Contraseña" />
+    <label for="email">Correo electrónico</label>
+    <input id="email" type="email" placeholder="tu@email.com">
 
-    <button onclick="login()">Ingresar</button>
+    <label for="password">Contraseña</label>
+    <input id="password" type="password" placeholder="Contraseña">
 
-    <div class="status" id="status"></div>
+    <button id="loginBtn">Entrar</button>
+
+    <div class="error" id="errorMsg"></div>
 
     <footer>
-      Acceso protegido · MagicBank ©
+      Acceso exclusivo para estudiantes activos
     </footer>
   </div>
 
 <script>
-  const BACKEND_LOGIN =
-    "https://magic-bank-backend-production-713e.up.railway.app/api/auth/login";
+const BACKEND_LOGIN =
+  "https://magic-bank-backend-production-713e.up.railway.app/api/auth/login";
 
-  async function login() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const status = document.getElementById("status");
+const loginBtn = document.getElementById("loginBtn");
+const errorMsg = document.getElementById("errorMsg");
 
-    if (!email || !password) {
-      status.textContent = "Debes ingresar correo y contraseña.";
+loginBtn.onclick = async () => {
+  errorMsg.textContent = "";
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!email || !password) {
+    errorMsg.textContent = "Debes ingresar correo y contraseña.";
+    return;
+  }
+
+  try {
+    const res = await fetch(BACKEND_LOGIN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!data.acceso) {
+      errorMsg.textContent = "Acceso denegado.";
       return;
     }
 
-    status.textContent = "Verificando acceso…";
+    /* =========================
+       REDIRECCIÓN AUTORIZADA
+       (EL FRONTEND NO DECIDE)
+    ========================= */
 
-    try {
-      const res = await fetch(BACKEND_LOGIN, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        status.textContent = data.error || "Acceso denegado.";
-        return;
-      }
-
-      status.textContent = "Acceso concedido. Redirigiendo…";
-
-      // 🔑 Redirección según permiso
-      setTimeout(() => {
-        window.location.href = data.redirect;
-      }, 800);
-
-    } catch (err) {
-      status.textContent = "Error de conexión con MagicBank.";
+    if (data.tipo === "academy") {
+      window.location.href =
+        `/academy/aula.html?curso=${data.destino.curso_id}`;
+      return;
     }
+
+    if (data.tipo === "university") {
+      window.location.href =
+        `/university/aula.html?facultad=${data.destino.facultad_id}`;
+      return;
+    }
+
+    errorMsg.textContent = "Acceso válido, pero destino no reconocido.";
+
+  } catch (e) {
+    errorMsg.textContent = "Error de conexión con MagicBank.";
   }
+};
 </script>
 
 </body>
