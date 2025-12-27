@@ -2,171 +2,164 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>MagicBank · Acceso</title>
+  <title>MagicBank · Acceso creado</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --azul-profundo: #070C2A;
+      --blanco: #FFFFFF;
+      --gris: #CFCFD6;
+      --dorado: #D6B15A;
+    }
+
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0a1f44;
-      color: #ffffff;
-      height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: var(--azul-profundo);
+      color: var(--blanco);
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .login-box {
-      background: #0f2a5a;
-      padding: 30px;
-      border-radius: 12px;
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      max-width: 460px;
       width: 100%;
-      max-width: 360px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      padding: 36px;
     }
 
     h1 {
+      font-size: 26px;
+      margin-bottom: 12px;
+      color: var(--dorado);
       text-align: center;
-      color: #c9a14a;
-      margin-bottom: 10px;
     }
 
     p {
+      font-size: 15px;
+      color: var(--gris);
+      margin-bottom: 22px;
       text-align: center;
-      font-size: 14px;
-      margin-bottom: 25px;
-      color: #d6d6d6;
+      line-height: 1.6;
     }
 
     label {
       font-size: 13px;
-      margin-top: 15px;
+      color: var(--gris);
       display: block;
+      margin-bottom: 6px;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 8px;
       border: none;
       font-size: 14px;
     }
 
     button {
       width: 100%;
-      margin-top: 20px;
-      padding: 12px;
-      background: #c9a14a;
-      color: #0a1f44;
-      font-weight: bold;
+      padding: 14px;
+      background: var(--dorado);
+      color: #1A1A1A;
+      font-weight: 600;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 15px;
     }
 
-    button:active {
-      opacity: 0.9;
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
-    .error {
-      margin-top: 15px;
-      color: #ffb3b3;
-      font-size: 13px;
+    .mensaje {
+      margin-top: 18px;
+      font-size: 14px;
       text-align: center;
-    }
-
-    footer {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 11px;
-      color: #aaa;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="login-box">
-    <h1>MagicBank</h1>
-    <p>Acceso autorizado a tu formación</p>
+  <div class="card">
+    <h1>Pago confirmado</h1>
 
-    <label for="email">Correo electrónico</label>
-    <input id="email" type="email" placeholder="tu@email.com">
+    <p>
+      Tu pago fue procesado correctamente.<br>
+      Crea ahora tu acceso a MagicBank para ingresar a tu tutor.
+    </p>
 
-    <label for="password">Contraseña</label>
-    <input id="password" type="password" placeholder="Contraseña">
+    <form id="registroForm">
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" required placeholder="tu@email.com">
 
-    <button id="loginBtn">Entrar</button>
+      <label for="password">Crear contraseña</label>
+      <input type="password" id="password" required placeholder="Mínimo 6 caracteres">
 
-    <div class="error" id="errorMsg"></div>
+      <button type="submit">Crear acceso</button>
+    </form>
 
-    <footer>
-      Acceso exclusivo para estudiantes activos
-    </footer>
+    <div id="mensaje" class="mensaje"></div>
   </div>
 
 <script>
-const BACKEND_LOGIN =
-  "https://magic-bank-backend-production-713e.up.railway.app/api/auth/login";
+  const form = document.getElementById("registroForm");
+  const mensaje = document.getElementById("mensaje");
 
-const loginBtn = document.getElementById("loginBtn");
-const errorMsg = document.getElementById("errorMsg");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    mensaje.textContent = "Creando acceso...";
 
-loginBtn.onclick = async () => {
-  errorMsg.textContent = "";
+    const data = {
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value
+    };
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+    try {
+      const res = await fetch(
+        "https://magic-bank-backend-production-713e.up.railway.app/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        }
+      );
 
-  if (!email || !password) {
-    errorMsg.textContent = "Debes ingresar correo y contraseña.";
-    return;
-  }
+      const result = await res.json();
 
-  try {
-    const res = await fetch(BACKEND_LOGIN, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+      if (res.ok) {
+        mensaje.style.color = "#D6B15A";
+        mensaje.textContent = "Acceso creado. Redirigiendo a tu panel...";
+        setTimeout(() => {
+          window.location.href = "https://login.magicbank.org/panel";
+        }, 2000);
+      } else {
+        mensaje.style.color = "red";
+        mensaje.textContent = result.message || "Error al crear el acceso";
+      }
 
-    const data = await res.json();
-
-    if (!data.acceso) {
-      errorMsg.textContent = "Acceso denegado.";
-      return;
+    } catch (err) {
+      mensaje.style.color = "red";
+      mensaje.textContent = "Error de conexión con MagicBank";
     }
-
-    /* =========================
-       REDIRECCIÓN AUTORIZADA
-       (EL FRONTEND NO DECIDE)
-    ========================= */
-
-    if (data.tipo === "academy") {
-      window.location.href =
-        `/academy/aula.html?curso=${data.destino.curso_id}`;
-      return;
-    }
-
-    if (data.tipo === "university") {
-      window.location.href =
-        `/university/aula.html?facultad=${data.destino.facultad_id}`;
-      return;
-    }
-
-    errorMsg.textContent = "Acceso válido, pero destino no reconocido.";
-
-  } catch (e) {
-    errorMsg.textContent = "Error de conexión con MagicBank.";
-  }
-};
+  });
 </script>
 
 </body>
