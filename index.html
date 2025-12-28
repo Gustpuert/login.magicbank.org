@@ -2,95 +2,53 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>MagicBank · Acceso creado</title>
+  <title>MagicBank | Acceso</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
   <style>
-    :root {
-      --azul-profundo: #070C2A;
-      --blanco: #FFFFFF;
-      --gris: #CFCFD6;
-      --dorado: #D6B15A;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--azul-profundo);
-      color: var(--blanco);
-      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #070C2A;
+      color: #fff;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
 
-    .card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      max-width: 460px;
-      width: 100%;
-      padding: 36px;
+    .login-box {
+      background: #0E1440;
+      padding: 40px;
+      border-radius: 10px;
+      width: 320px;
     }
 
-    h1 {
-      font-size: 26px;
-      margin-bottom: 12px;
-      color: var(--dorado);
+    h2 {
       text-align: center;
-    }
-
-    p {
-      font-size: 15px;
-      color: var(--gris);
-      margin-bottom: 22px;
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    label {
-      font-size: 13px;
-      color: var(--gris);
-      display: block;
-      margin-bottom: 6px;
+      margin-bottom: 20px;
+      color: #D6B15A;
     }
 
     input {
       width: 100%;
       padding: 12px;
-      margin-bottom: 16px;
-      border-radius: 8px;
+      margin-bottom: 14px;
+      border-radius: 6px;
       border: none;
-      font-size: 14px;
     }
 
     button {
       width: 100%;
-      padding: 14px;
-      background: var(--dorado);
-      color: #1A1A1A;
-      font-weight: 600;
+      padding: 12px;
+      background: #D6B15A;
       border: none;
-      border-radius: 10px;
+      border-radius: 6px;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 15px;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .mensaje {
-      margin-top: 18px;
-      font-size: 14px;
+    #msg {
+      margin-top: 14px;
       text-align: center;
     }
   </style>
@@ -98,68 +56,83 @@
 
 <body>
 
-  <div class="card">
-    <h1>Pago confirmado</h1>
+<div class="login-box">
+  <h2>Acceso MagicBank</h2>
 
-    <p>
-      Tu pago fue procesado correctamente.<br>
-      Crea ahora tu acceso a MagicBank para ingresar a tu tutor.
-    </p>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="password" id="password" placeholder="Contraseña" required>
 
-    <form id="registroForm">
-      <label for="email">Correo electrónico</label>
-      <input type="email" id="email" required placeholder="tu@email.com">
+  <button onclick="login()">Ingresar</button>
 
-      <label for="password">Crear contraseña</label>
-      <input type="password" id="password" required placeholder="Mínimo 6 caracteres">
-
-      <button type="submit">Crear acceso</button>
-    </form>
-
-    <div id="mensaje" class="mensaje"></div>
-  </div>
+  <div id="msg"></div>
+</div>
 
 <script>
-  const form = document.getElementById("registroForm");
-  const mensaje = document.getElementById("mensaje");
+const API = "https://magic-bank-backend-production-713e.up.railway.app";
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    mensaje.textContent = "Creando acceso...";
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const msg = document.getElementById("msg");
 
-    const data = {
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
-    };
+  msg.textContent = "Validando acceso...";
 
-    try {
-      const res = await fetch(
-        "https://magic-bank-backend-production-713e.up.railway.app/api/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        }
-      );
+  try {
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
 
-      const result = await res.json();
+    const data = await res.json();
 
-      if (res.ok) {
-        mensaje.style.color = "#D6B15A";
-        mensaje.textContent = "Acceso creado. Redirigiendo a tu panel...";
-        setTimeout(() => {
-          window.location.href = "https://login.magicbank.org/panel";
-        }, 2000);
-      } else {
-        mensaje.style.color = "red";
-        mensaje.textContent = result.message || "Error al crear el acceso";
-      }
+    if (!res.ok) {
+      msg.textContent = data.message || "Error de acceso";
+      return;
+    }
 
-    } catch (err) {
-      mensaje.style.color = "red";
-      mensaje.textContent = "Error de conexión con MagicBank";
+    localStorage.setItem("token", data.token);
+
+    await redirectByAccess(data.token);
+
+  } catch (err) {
+    msg.textContent = "Error de conexión";
+  }
+}
+
+async function redirectByAccess(token) {
+  const res = await fetch(`${API}/api/access/check`, {
+    headers: {
+      "Authorization": "Bearer " + token
     }
   });
+
+  const data = await res.json();
+
+  if (!data.access || data.access.length === 0) {
+    alert("No tienes accesos asignados");
+    return;
+  }
+
+  /* PRIORIDAD DE REDIRECCIÓN */
+  if (data.access.includes("academy")) {
+    window.location.href = "https://academy.magicbank.org";
+    return;
+  }
+
+  if (data.access.some(a => a.startsWith("facultad-"))) {
+    window.location.href = "https://university.magicbank.org";
+    return;
+  }
+
+  if (data.access.includes("curso-cocina")) {
+    window.location.href = "https://chatgpt.com/g/g-6925b1e4cff88191a3e46165e9ab7824-elchef";
+    return;
+  }
+
+  /* fallback */
+  alert("Acceso válido pero sin destino definido");
+}
 </script>
 
 </body>
